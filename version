@@ -1,0 +1,4 @@
+11.02.2026 1.0.0
+- vpnbot-mini: lightweight fork of mercurykd/vpnbot
+- removed: OpenConnect, NaiveProxy, MTProto, Shadowsocks, Hysteria
+- sing-box: migrated to 1.13 format
