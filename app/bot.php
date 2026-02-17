@@ -4056,7 +4056,6 @@ DNS-over-HTTPS with IP:
             $c      = yaml_parse_file($f)['services'];
 
             if (!empty($conf['domain'])) {
-                $main[] = '';
                 if (!empty($conf['domain'])) {
                     $ssl_expiry = $this->expireCert();
                     $certs      = $this->domainsCert() ?: [];
@@ -4075,7 +4074,6 @@ DNS-over-HTTPS with IP:
 
 
             $ports   = yaml_parse_file('/docker/compose')['services'];
-            $main[]  = '';
 
             $main[] = '<code>';
             $main[] = $this->alignColumns([

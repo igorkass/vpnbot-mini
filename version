@@ -1,3 +1,7 @@
+17.02.2026 1.0.1
+- fix: убрано лишнее пустое пространство в главном меню бота
+- fix: init.sh и update.sh — корректная передача тегов для имён контейнеров
+
 11.02.2026 1.0.0
 - vpnbot-mini: lightweight fork of mercurykd/vpnbot
 - removed: OpenConnect, NaiveProxy, MTProto, Shadowsocks, Hysteria

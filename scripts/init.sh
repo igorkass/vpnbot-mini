@@ -15,6 +15,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
 git clone https://github.com/igorkass/vpnbot-mini.git
 cd ./vpnbot-mini
 git checkout $TAG
+git fetch --tags --force
 echo "<?php
 
 \$c = ['key' => '$1'];" > ./app/config.php
