@@ -1872,7 +1872,34 @@ class Bot
 
     public function getPacConf()
     {
-        return json_decode(file_get_contents($this->pac), true);
+        $conf = json_decode(file_get_contents($this->pac), true);
+        $this->cleanPacConf($conf, [
+            'showdnstt', 'dnsttDomain',           // DNSTT removed
+            'naive',                              // NaiveProxy removed
+            'ocserv', 'oc_domain', 'np_domain',   // OCServ / NaiveProxy domains removed
+            'shadowsocks', 'ss',                  // Shadowsocks removed
+            'mtproto', 'tgproto',                 // MTProto removed
+            'hysteria', 'hy2',                    // Hysteria removed
+        ]);
+        return $conf;
+    }
+
+    /**
+     * Remove deprecated keys from pac config and persist the change if anything was cleaned.
+     * Add removed component keys here to keep pac.json clean on every bot interaction.
+     */
+    public function cleanPacConf(array &$conf, array $deprecated = [])
+    {
+        $dirty = false;
+        foreach ($deprecated as $key) {
+            if (array_key_exists($key, $conf)) {
+                unset($conf[$key]);
+                $dirty = true;
+            }
+        }
+        if ($dirty) {
+            $this->setPacConf($conf);
+        }
     }
 
     public function setPacConf(array $conf)
