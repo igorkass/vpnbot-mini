@@ -22,6 +22,5 @@ $bot->adguardSync();
 $bot->cloakNginx();
 $bot->syncDeny();
 $bot->cleanDocker();
-$bot->dnsttStart();
 $c = $bot->getPacConf();
 $bot->setUpstreamDomain($c['transport'] != 'Reality' ? 't' : $c['reality']['domain']);

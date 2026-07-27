@@ -29,8 +29,6 @@ ad: # консоль сервиса
 	docker compose exec ad /bin/sh
 wp: # консоль сервиса
 	docker compose exec wp bash
-dnstt: # консоль сервиса
-	docker compose exec dnstt /bin/sh
 xr: # консоль сервиса
 	docker compose exec xr /bin/sh
 service: # консоль сервиса

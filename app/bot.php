@@ -315,27 +315,7 @@ class Bot
             case preg_match('~^/logs$~', $this->input['callback'], $m):
                 $this->logs();
                 break;
-            case preg_match('~^/dnstt$~', $this->input['callback'] ?: $this->input['message'], $m):
-                $this->dnstt(!empty($this->input['callback']));
-                break;
-            case preg_match('~^/showdnstt$~', $this->input['callback'], $m):
-                $this->showdnstt();
-                break;
-            case preg_match('~^/dnsttDownload$~', $this->input['callback'], $m):
-                $this->dnsttDownload();
-                break;
-            case preg_match('~^/dnsttDomain$~', $this->input['callback'], $m):
-                $this->dnsttDomain();
-                break;
-            case preg_match('~^/dnsttPassword$~', $this->input['callback'], $m):
-                $this->dnsttPassword();
-                break;
-            case preg_match('~^/setdnsttDomain (\w+)$~', $this->input['callback'], $m):
-                $this->setdnsttDomain($m[1]);
-                break;
-            case preg_match('~^/setdnsttPassword (\w+)$~', $this->input['callback'], $m):
-                $this->setdnsttPassword($m[1]);
-                break;
+
             case preg_match('~^/getLog (?P<arg>\d+(?:_(?:-)?\d+)?)$~', $this->input['callback'], $m):
                 $this->getLog(...explode('_', $m['arg']));
                 break;
@@ -1340,10 +1320,7 @@ class Bot
                 'private' => file_get_contents('/certs/cert_private'),
                 'public'  => file_get_contents('/certs/cert_public'),
             ] : false,
-            'dnstt' => file_exists('/config/dnstt/server.key') ? [
-                'private' => file_get_contents('/config/dnstt/server.key'),
-                'public'  => file_get_contents('/config/dnstt/server.pub'),
-            ] : false,
+
             'xray'          => $this->getXray(),
             'xraystats'     => $this->getXrayStats(),
         ];
@@ -1444,13 +1421,7 @@ class Bot
                 $this->update($this->input['chat'], $this->input['message_id'], implode("\n", $out));
                 $this->setXrayStats($json['xraystats']);
             }
-            // dnstt
-            if (!empty($json['dnstt'])) {
-                $out[] = 'update dnstt certificates';
-                $this->update($this->input['chat'], $this->input['message_id'], implode("\n", $out));
-                file_put_contents('/config/dnstt/server.key', $json['dnstt']['private']);
-                file_put_contents('/config/dnstt/server.pub', $json['dnstt']['public']);
-            }
+
             // nginx
             $out[] = 'reset nginx';
             $this->update($this->input['chat'], $this->input['message_id'], implode("\n", $out));
@@ -3909,149 +3880,7 @@ DNS-over-HTTPS with IP:
         return implode("\n", $result);
     }
 
-    public function dnsttDomain()
-    {
-        $r = $this->send(
-            $this->input['chat'],
-            "@{$this->input['username']} enter domain",
-            $this->input['message_id'],
-            reply: 'enter domain',
-        );
-        $_SESSION['reply'][$r['result']['message_id']] = [
-            'start_message' => $this->input['message_id'],
-            'callback'      => 'setdnsttDomain',
-            'args'          => [],
-        ];
-    }
 
-    public function dnsttPassword()
-    {
-        $r = $this->send(
-            $this->input['chat'],
-            "@{$this->input['username']} enter password",
-            $this->input['message_id'],
-            reply: 'enter password',
-        );
-        $_SESSION['reply'][$r['result']['message_id']] = [
-            'start_message' => $this->input['message_id'],
-            'callback'      => 'setdnsttPassword',
-            'args'          => [],
-        ];
-    }
-
-    public function setdnsttPassword($text)
-    {
-        $c = $this->getPacConf();
-        if ($text) {
-            $c['dnsttPassword'] = $text;
-        } else {
-            unset($c['dnsttPassword']);
-        }
-        $this->setPacConf($c);
-        $this->dnsttStart();
-        $this->dnstt();
-    }
-
-    public function setdnsttDomain($text)
-    {
-        $c = $this->getPacConf();
-        if ($text) {
-            $c['dnsttDomain'] = $text;
-        } else {
-            unset($c['dnsttDomain']);
-        }
-        $this->setPacConf($c);
-        $this->dnsttStart();
-        $this->dnstt();
-    }
-
-    public function dnsttStart()
-    {
-        $c = $this->getPacConf();
-        $this->ssh('pkill dnstt', 'dnstt');
-        if (!empty($c['dnsttDomain']) && !empty($c['dnsttPassword'])) {
-            $this->ssh("adduser -D -s /bin/sh vpnbot", 'dnstt');
-            $this->ssh("echo 'vpnbot:{$c['dnsttPassword']}' | chpasswd", 'dnstt');
-            if (!file_exists('/config/dnstt/server.key')) {
-                $this->ssh("dnstt-server -gen-key -privkey-file /dnstt/server.key -pubkey-file /dnstt/server.pub", 'dnstt');
-            }
-            $this->ssh("dnstt-server -udp :53 -privkey-file /dnstt/server.key {$c['dnsttDomain']} 127.0.0.1:22", 'dnstt' , false, '/logs/dnstt');
-        }
-    }
-
-    public function dnsttDownload()
-    {
-        $this->sendFile($this->input['from'], curl_file_create('/config/dnstt/server.pub'));
-    }
-
-    public function showdnstt()
-    {
-        $c = $this->getPacConf();
-        $c['showdnstt'] = empty($c['showdnstt']);
-        $this->setPacConf($c);
-        $this->dnstt(1);
-    }
-
-    public function dnstt($update = false)
-    {
-        $c      = $this->getPacConf();
-        $pubkey = file_get_contents('/config/dnstt/server.pub');
-        $text[] = "dnstt";
-        $data[] = [
-            [
-                'text'          => $this->i18n('show in menu ') . $this->i18n($c['showdnstt'] ? 'on' : 'off'),
-                'callback_data' => "/showdnstt",
-            ],
-        ];
-        if (!empty($c['dnsttDomain']) && !empty($c['dnsttPassword'])) {
-            $text[] = "<pre>set the NS record for {$c['dnsttDomain']}: tns.{$c['domain']}\nset A record for tns.{$c['domain']}: {$this->ip}</pre>";
-            $text[] = "account: <code>vpnbot:{$c['dnsttPassword']}</code>";
-            $text[] = "server name: <code>{$c['dnsttDomain']}</code>";
-            $text[] = "public key: <code>$pubkey</code>";
-            $data[] = [
-                [
-                    'text'          => $this->i18n('download pubkey'),
-                    'callback_data' => "/dnsttDownload",
-                ],
-            ];
-        } else {
-            $text[] = "set subdomain and password";
-        }
-
-        $data[] = [
-            [
-                'text'          => $this->i18n('set subdomain'),
-                'callback_data' => "/dnsttDomain",
-            ],
-        ];
-        $data[] = [
-            [
-                'text'          => $this->i18n('set password'),
-                'callback_data' => "/dnsttPassword",
-            ],
-        ];
-        $data[] = [
-            [
-                'text'          => $this->i18n('back'),
-                'callback_data' => "/menu",
-            ],
-        ];
-        if ($update) {
-            $this->update(
-                $this->input['chat'],
-                $this->input['message_id'],
-                implode("\n", $text),
-                $data ?: false,
-            );
-        } else {
-            $this->send(
-                $this->input['chat'],
-                implode("\n", $text),
-                $this->input['message_id'],
-                $data ?: false,
-            );
-        }
-    }
 
     public function menu($type = false, $arg = false, $return = false)
     {
@@ -4100,7 +3929,6 @@ DNS-over-HTTPS with IP:
                     $this->i18n($this->ssh($this->getPacConf()['wg1_amnezia'] ? 'awg' : 'wg', 'wg1') ? 'on' : 'off') . ' ' . $this->i18n($this->getPacConf()['wg1_amnezia'] ? 'amnezia' : 'wg_title'),
                     $this->i18n($this->ssh('pgrep xray', 'xr') ? 'on' : 'off') . ' ' . $this->i18n('xray'),
                     $this->i18n(exec("JSON=1 timeout 2 dnslookup google.com ad") ? 'on' : 'off') . ' ' . $this->i18n('ad_title'),
-                    $this->i18n($this->ssh('pgrep dnstt', 'dnstt') ? 'on' : 'off') . ' ' . $this->i18n('dnstt'),
                     $this->i18n($this->warpStatus()) . ' ' . $this->i18n('warp'),
                 ],
                 [
@@ -4108,7 +3936,6 @@ DNS-over-HTTPS with IP:
                     $this->i18n($c['wg1'] ? 'on' : 'off') . ' ' . getenv('WG1PORT'),
                     $this->i18n('on') . ' 443',
                     $this->i18n($c['ad'] ? 'on' : 'off') . ' 853',
-                    $this->i18n($c['dnstt'] ? 'on' : 'off') . ' 53',
                     '',
                 ],
             ]);
@@ -4164,12 +3991,7 @@ DNS-over-HTTPS with IP:
                             ],
                         ],
                     ],
-                    $conf['showdnstt'] ? [[
-                        [
-                            'text'          => $this->i18n('DNSTT'),
-                            'callback_data' => "/dnstt",
-                        ],
-                    ]] : [],
+
                     [
                         [
                             [
@@ -7748,10 +7570,7 @@ DNS-over-HTTPS with IP:
                 'text'          => $this->i18n($c['ad'] ? 'on' : 'off') . ' 853 AdguardHome DoT',
                 'callback_data' => "/hidePort ad",
             ]],
-            [[
-                'text'          => $this->i18n($c['dnstt'] ? 'on' : 'off') . ' 53 dnstt',
-                'callback_data' => "/hidePort dnstt",
-            ]],
+
         ];
         if (!empty($pac['restart'])) {
             $data[] = [
@@ -7781,7 +7600,6 @@ DNS-over-HTTPS with IP:
             'wg'    => getenv('WGPORT') . ':' . getenv('WGPORT') . '/udp',
             'wg1'   => getenv('WG1PORT') . ':' . getenv('WG1PORT') . '/udp',
             'ad'    => '853:853',
-            'dnstt' => '53:53/udp',
         ];
         $f = '/docker/compose';
         $content = file_exists($f) ? file_get_contents($f) : '';

@@ -200,7 +200,6 @@ services:
             - wg1
             - ad
             - xr
-            - dnstt
     wg:
         image: mercurykd/vpnbot-wg:1.2
         build:
@@ -376,33 +375,4 @@ services:
         networks:
             default:
                 ipv4_address: 10.10.0.13
-        logging: *default-logging
-    dnstt:
-        image: mercurykd/vpnbot-dnstt:1.0
-        build:
-            dockerfile: dockerfile/dnstt.dockerfile
-            args:
-                image: ${IMAGE}
-        volumes:
-            - ./config/.profile:/root/.ashrc:ro
-            - ./ssh:/ssh
-            - ./logs:/logs
-            - ./config/sshd_config:/etc/ssh/sshd_config
-            - ./config/dnstt:/dnstt
-            - ./scripts/start_dnstt.sh:/start_dnstt.sh
-        hostname: dnstt
-        container_name: dnstt-${VER}
-        depends_on:
-            php:
-                condition: service_healthy
-        env_file:
-            - path: ./.env
-              required: true # default
-            - path: ./override.env
-              required: false
-        stop_grace_period: 1s
-        command: ["/bin/sh", "/start_dnstt.sh"]
-        networks:
-            default:
-                ipv4_address: 10.10.0.16
         logging: *default-logging

@@ -4,7 +4,7 @@ Lightweight fork of [mercurykd/vpnbot](https://github.com/mercurykd/vpnbot):
 
 - VLESS (Reality, WebSocket, XHTTP)
 - WireGuard, Amnezia VPN
-- WARP, DNSTT, PAC
+- WARP, PAC
 - Automatic SSL
 
 Removed: OpenConnect, NaiveProxy, MTProto, Shadowsocks, Hysteria.

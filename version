@@ -1,3 +1,6 @@
+27.07.2026 1.0.4
+- remove: удалён DNSTT (сервис, контейнер и все связанные функции и меню бота)
+
 27.07.2026 1.0.3
 - feat: обновление до AmneziaWG 2.0 (протокол v2, новые параметры обфускации S3/S4/I1, сброс obf-keys)
 - docker: образ WireGuard обновлён до mercurykd/vpnbot-wg:1.2
@@ -10,6 +13,6 @@
 - fix: init.sh и update.sh — корректная передача тегов для имён контейнеров
 
 11.02.2026 1.0.0
-- vpnbot-mini: lightweight fork of mercurykd/vpnbot
-- removed: OpenConnect, NaiveProxy, MTProto, Shadowsocks, Hysteria
-- sing-box: migrated to 1.13 format
+- feat: vpnbot-mini — облегчённый форк mercurykd/vpnbot
+- remove: удалены OpenConnect, NaiveProxy, MTProto, Shadowsocks, Hysteria
+- refactor: миграция шаблона sing-box на формат 1.13
